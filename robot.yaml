@@ -2,8 +2,11 @@
 # https://github.com/robocorp/rcc/blob/master/docs/recipes.md#what-is-in-robotyaml
 
 tasks:
-  ScraperReuters:
-    shell: python -m robocorp.tasks run tasks.py
+  ReadCSV:
+    shell: python -m robocorp.tasks run tasks.py -t get_csv_produce_work_item
+  ReutersScraper:
+    shell: python -m robocorp.tasks run tasks.py -t scraper_and_output_file
+
 
 environmentConfigs:
   - environment_windows_amd64_freeze.yaml
