@@ -1,6 +1,7 @@
 import robocorp.log as logger
 from robocorp.tasks import task
-from RPA.Browser.Selenium import Selenium
+from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
 
 from tasks_methods.methods import ExcelOtherMethods, ProducerMethods, ScraperMethods
 
@@ -14,7 +15,9 @@ def scraper_and_output_file():
     pay = ScraperMethods.get_work_item()
     if pay:
         logger.info("The current item from the work item has been retrieved")
-    driver = Selenium()
+    chrome_manager = ChromeDriverManager()
+    chrome_manager.install()
+    driver = webdriver.Chrome()
     initial_search = ScraperMethods.inicial_search(
         driver=driver, phrase=pay.phrase_test
     )

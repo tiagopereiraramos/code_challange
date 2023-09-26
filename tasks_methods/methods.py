@@ -71,22 +71,22 @@ class ScraperMethods:
         try:
             if driver:
                 logger.info(f"Open URL: {site_url}")
-                driver.open_available_browser(site_url)
-                driver.driver.maximize_window()
+                driver.get(site_url)
+                driver.maximize_window()
                 search = find_element(
-                    driver.driver, Selector(css='button[aria-label="Open search bar"]')
+                    driver, Selector(css='button[aria-label="Open search bar"]')
                 )
                 if search:
                     search.click()
                     search_field = find_element(
-                        driver.driver,
+                        driver,
                         Selector(css="input[aria-labelledby*=react-aria]"),
                     )
                     if search_field:
                         if "search" in search_field.get_attribute("type"):
                             slow_send_keys(el=search_field, text=phrase)
                             button_search = find_element(
-                                driver.driver,
+                                driver,
                                 Selector(css="button[aria-label='Search']"),
                             )
                             if button_search:
@@ -106,25 +106,25 @@ class ScraperMethods:
     ):
         try:
             no_results_match = find_with_text(
-                driver.driver, "h1", f"No search results match the term “{phrase}”"
+                driver, "h1", f"No search results match the term “{phrase}”"
             )
             if no_results_match:
                 logger.critical(f"Some error occurred: No search match...")
                 return False
             label_search = find_element(
-                driver.driver, Selector(css="label", text="Search Reuters")
+                driver, Selector(css="label", text="Search Reuters")
             )
             if label_search:
                 if len(section.strip()) > 0:
                     if label_search:
                         combo_section = find_element(
-                            driver.driver, Selector(css='button[id="sectionfilter"]')
+                            driver, Selector(css='button[id="sectionfilter"]')
                         )
                         if combo_section:
-                            center_element(driver.driver, combo_section)
+                            center_element(driver, combo_section)
                             combo_section.click()
                             find_section = find_element(
-                                driver.driver,
+                                driver,
                                 Selector(css="li", attr=["data-key", f"{section}"]),
                             )
                             if find_section:
@@ -132,10 +132,10 @@ class ScraperMethods:
                                 sleep(3)
                 if data_range >= 0:
                     combo_data_range = find_element(
-                        driver.driver, Selector(css='button[id="daterangefilter"]')
+                        driver, Selector(css='button[id="daterangefilter"]')
                     )
                     if combo_data_range:
-                        center_element(driver.driver, combo_data_range)
+                        center_element(driver, combo_data_range)
                         combo_data_range.click()
                         #!LEGEND: 0= Past 24 hours 1= Past week 2= Past month 3= Past year
                         if data_range == 0:
@@ -147,7 +147,7 @@ class ScraperMethods:
                         elif data_range == 3:
                             data_range_str = "Past year"
                         find_data_range = find_element(
-                            driver.driver,
+                            driver,
                             Selector(css="li", attr=["data-key", f"{data_range_str}"]),
                         )
                         if find_data_range:
@@ -155,10 +155,10 @@ class ScraperMethods:
                             sleep(3)
                 if sort_by >= 0:
                     combo_sort = find_element(
-                        driver.driver, Selector(css='button[id="sortby"]')
+                        driver, Selector(css='button[id="sortby"]')
                     )
                     if combo_sort:
-                        center_element(driver.driver, combo_sort)
+                        center_element(driver, combo_sort)
                         combo_sort.click()
                         #!LEGEND: 0= Newest 1= Older 2= Relevance
                         if sort_by == 0:
@@ -171,7 +171,7 @@ class ScraperMethods:
                             sort_by_str = "Newest"
                         combo_sort.click()
                         find_sort_by = find_element(
-                            driver.driver,
+                            driver,
                             Selector(css="li", attr=["data-key", f"{sort_by_str}"]),
                         )
                         if find_sort_by:
@@ -191,13 +191,13 @@ class ScraperMethods:
             while more_results:
                 logger.info("Search results was found")
                 search_results_section = find_element(
-                    driver.driver,
+                    driver,
                     Selector(css="div[class*=search-results__sectionContainer]"),
                 )
                 if search_results_section:
                     logger.info("Search results was found")
                     li_search_results = find_all_css(
-                        driver.driver, 'ul[class*="search-results__list"] li'
+                        driver, 'ul[class*="search-results__list"] li'
                     )
                     if li_search_results:
                         sleep(3)
@@ -217,7 +217,7 @@ class ScraperMethods:
                             title = find_elm_with_attribute(li, lst_title)
                             time = find_elm_with_attribute(li, lst_time)
                             try:
-                                center_element(driver.driver, li)
+                                center_element(driver, li)
                                 photo = find_elm_picture(
                                     li, Selector(css='img[src*=".jpg"]')
                                 )
@@ -243,15 +243,15 @@ class ScraperMethods:
                             list_articles.append(article)
                         try:
                             button_next = find_element(
-                                driver.driver,
+                                driver,
                                 Selector(css='button[aria-label*="Next stories"]'),
                             )
                             if button_next:
-                                center_element(driver.driver, button_next)
+                                center_element(driver, button_next)
                                 button_next.click()
                         except:
                             button_next = find_element(
-                                driver.driver,
+                                driver,
                                 Selector(css='button[aria-label*="Disabled"]'),
                             )
                             if button_next:
