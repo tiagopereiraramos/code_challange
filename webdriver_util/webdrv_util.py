@@ -16,11 +16,12 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver import Keys
-from helpers.selector import Selector
+from helpers.selector import Selector, TagAttVl
 import robocorp.log as logger
 
+#*This is my personal lib with selenium methods that help me scraper better. 
 
-Timeout = 10
+Timeout = 5
 RetryAttempts = 4
 
 
@@ -104,6 +105,33 @@ def find_all_with_attribute(driver, tag, attr, value, timeout=Timeout):
         logger.error(f"Exception occurred: {str(e)}")
         return None
 
+def find_all_elm_with_attribute(elm:WebElement, tag, attr, value, timeout=Timeout):
+    try:
+        target = normalize(value)
+        return [
+            e
+            for e in elm.find_elements(By.TAG_NAME, tag)
+            if e.get_attribute(attr) and (target in normalize(e.get_attribute(attr)))
+        ]
+    except (ElementClickInterceptedException, ElementNotInteractableException, JavascriptException, NoSuchElementException) as e:
+        logger.error(f"Exception occurred: {str(e)}")
+        return None
+
+def find_elm_with_attribute(elm:WebElement, tag_attr_value:TagAttVl | list[TagAttVl], timeout=Timeout)-> WebElement | None:
+    if not isinstance(tag_attr_value, list):
+        tag_attr_value = [tag_attr_value]  
+    for selector in tag_attr_value:
+        try:
+            logger.debug(f"Trying to find {selector.attr}")
+            target = normalize(selector.vlr)
+            e = elm.find_element(By.TAG_NAME, selector.tag)
+            if e:
+                if e.get_attribute(selector.attr) and (target in normalize(e.get_attribute(selector.attr))):
+                    sleep(0.3)
+                    return e        
+        except NoSuchElementException:
+            continue
+
 def find_with_attribute(driver, tag, attr, value, timeout=Timeout):
     try:
         label = "find_with_attribute %s %s %s" % (tag, attr, value)
@@ -172,6 +200,13 @@ def find_css(driver, css_selector, timeout=Timeout):
         logger.error(f"Exception occurred: {str(e)}")
         return None
 
+def find_all_css(driver: WebDriver, css_selector, timeout=Timeout):
+    try:
+        return driver.find_elements(By.CSS_SELECTOR, css_selector)
+    except (ElementClickInterceptedException, ElementNotInteractableException, JavascriptException, NoSuchElementException) as e:
+        logger.error(f"Exception occurred: {str(e)}")
+        return None
+
 def find_element(driver: WebDriver, selectors: Selector | list[Selector], timeout: int = Timeout
 ) -> WebElement | None:
     """
@@ -188,7 +223,7 @@ def find_element(driver: WebDriver, selectors: Selector | list[Selector], timeou
 
     for selector in selectors:
         elm = None
-        logger.debug(f"Trying to find {selector.css} with text '{selector.text}'")
+        logger.debug(f"Trying to find {selector.css}")
         try:
             if selector.xpath:
                 elm = WebDriverWait(driver, timeout).until(
@@ -203,6 +238,43 @@ def find_element(driver: WebDriver, selectors: Selector | list[Selector], timeou
                 )
             elif selector.css:
                 elm = find_css(driver, selector.css, timeout=timeout)
+            if elm:
+                logger.debug(f"Found element: {elm}")
+                return elm
+        except NoSuchElementException:
+            continue
+
+def find_elements(driver: WebDriver, selectors: Selector | list[Selector], timeout: int = Timeout
+) -> WebElement | None:
+    """
+    Find an element by css, text or xpath. If a list of selectors is provided, it will try to find the
+    first one that matches.
+
+    :param driver: chrome driver
+    :param selectors: list of Selectors
+    :param timeout: timeout in seconds
+    :return: the element if found, None otherwise
+    """
+    if not isinstance(selectors, list):
+        selectors = [selectors]
+
+    for selector in selectors:
+        elm = None
+        logger.debug(f"Trying to find {selector.css}")
+        try:
+            if selector.xpath:
+                elm = WebDriverWait(driver, timeout).until(
+                    EC.presence_of_all_elements_located_located(locator=[By.XPATH, selector.xpath])
+                )
+            elif selector.css and selector.attr:
+                attr, value = selector.attr
+                elm = find_with_attribute(driver, selector.css, attr, value, timeout)
+            elif selector.css and selector.text:
+                elm = find_css_with_text(
+                    driver, selector.css, selector.text, timeout=timeout
+                )
+            elif selector.css:
+                elm = find_all_css(driver, selector.css, timeout=timeout)
             if elm:
                 logger.debug(f"Found element: {elm}")
                 return elm
@@ -244,7 +316,6 @@ def find_fuzzy(elements, to_string, target):
         ).ratio(),
     )[-1]
 
-
 def page_contains(driver, token, timeout=Timeout):
     haystack = (
         WebDriverWait(driver, timeout)
@@ -253,14 +324,11 @@ def page_contains(driver, token, timeout=Timeout):
     )
     return re.search(token, haystack, re.IGNORECASE) is not None
 
-
 def select_option_value(select, option):
     select_option(select, option, lambda op: op.get_attribute("value"))
 
-
 def select_option_text(select, option):
     select_option(select, option, lambda op: op.text)
-
 
 def find_it(driver, elements, timeout=Timeout, label=None):
     def get():
@@ -270,7 +338,6 @@ def find_it(driver, elements, timeout=Timeout, label=None):
         return None
 
     return wait_for(get, timeout=timeout, label=label)
-
 
 def wait_for(fun, timeout=Timeout, label=None):
     """
@@ -294,7 +361,6 @@ def wait_for(fun, timeout=Timeout, label=None):
             t = t + delta
     return fun()
 
-
 def retry(fun, on_fail=lambda: True, sleep_time=1, attempts=RetryAttempts):
     for attempt in range(0, attempts):
         try:
@@ -315,14 +381,11 @@ def retry(fun, on_fail=lambda: True, sleep_time=1, attempts=RetryAttempts):
             )
             sleep(sleep_time)
 
-
 class DontRetryException(Exception):
     pass
 
-
 class KickedOutofFunnelException(DontRetryException):
     pass
-
 
 class Fatal(Exception):
     def __init__(self, e, metadata={}):
