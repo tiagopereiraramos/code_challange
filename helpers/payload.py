@@ -9,10 +9,11 @@ class Payload:
     data_range: int
     sort_by: int
 
-   
     def __str__(self):
         """Returns a string containing only the non-default field values."""
-        s = ', '.join(f'{field.name}={getattr(self, field.name)!r}'
-                      for field in dataclasses.fields(self)
-                      if getattr(self, field.name))
-        return f'{type(self).__name__}({s})'
+        s = ", ".join(
+            f"{field.name}={getattr(self, field.name)!r}"
+            for field in dataclasses.fields(self)
+            if getattr(self, field.name)
+        )
+        return f"{type(self).__name__}({s})"

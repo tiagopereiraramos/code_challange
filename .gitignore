@@ -12,6 +12,8 @@ temp/
 *.pyc
 *.zip
 */work-items-out/*
+*/downloads/*
+*/excel/*
 testrun/*
 .~lock*
 *.pkl

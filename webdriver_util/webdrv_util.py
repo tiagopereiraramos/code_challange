@@ -1,25 +1,26 @@
 import difflib
+import random
 import re
 import traceback
-import random
 from time import sleep
 
+import robocorp.log as logger
 from selenium.common import (
     ElementClickInterceptedException,
     ElementNotInteractableException,
     JavascriptException,
     NoSuchElementException,
 )
+from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver import Keys
-from helpers.selector import Selector, TagAttVl
-import robocorp.log as logger
 
-#*This is my personal lib with selenium methods that help me scraper better. 
+from helpers.selector import Selector, TagAttVl
+
+# *This is my personal lib with selenium methods that help me scraper better.
 
 Timeout = 5
 RetryAttempts = 4
@@ -27,6 +28,7 @@ RetryAttempts = 4
 
 def normalize(t: str) -> str:
     return t.lower().strip()
+
 
 def center_element(driver, elm):
     """
@@ -41,6 +43,7 @@ def center_element(driver, elm):
             "arguments[0].scrollIntoView({'block':'center','inline':'center'})", elm
         )
     return elm
+
 
 def slow_send_keys(el, text, unfocus_on_complete=True):
     """
@@ -68,6 +71,7 @@ def slow_send_keys(el, text, unfocus_on_complete=True):
             # field to trigger any js checks
             el.send_keys(Keys.TAB)
 
+
 def js_click(driver, elm):
     """
     Clicks an element with javascript. This is useful for elements that are not clickable or
@@ -80,16 +84,28 @@ def js_click(driver, elm):
         if elm:
             driver.execute_script("arguments[0].click();", elm)
         return elm
-    except (ElementClickInterceptedException, ElementNotInteractableException, JavascriptException, NoSuchElementException) as e:
+    except (
+        ElementClickInterceptedException,
+        ElementNotInteractableException,
+        JavascriptException,
+        NoSuchElementException,
+    ) as e:
         logger.error(f"Exception occurred: {str(e)}")
         return None
+
 
 def find_with_label(driver, tag, label, timeout=Timeout):
     try:
         return find_with_attribute(driver, tag, "aria-label", label, timeout)
-    except (ElementClickInterceptedException, ElementNotInteractableException, JavascriptException, NoSuchElementException) as e:
+    except (
+        ElementClickInterceptedException,
+        ElementNotInteractableException,
+        JavascriptException,
+        NoSuchElementException,
+    ) as e:
         logger.error(f"Exception occurred: {str(e)}")
         return None
+
 
 def find_all_with_attribute(driver, tag, attr, value, timeout=Timeout):
     try:
@@ -101,11 +117,17 @@ def find_all_with_attribute(driver, tag, attr, value, timeout=Timeout):
             )
             if e.get_attribute(attr) and (target in normalize(e.get_attribute(attr)))
         ]
-    except (ElementClickInterceptedException, ElementNotInteractableException, JavascriptException, NoSuchElementException) as e:
+    except (
+        ElementClickInterceptedException,
+        ElementNotInteractableException,
+        JavascriptException,
+        NoSuchElementException,
+    ) as e:
         logger.error(f"Exception occurred: {str(e)}")
         return None
 
-def find_all_elm_with_attribute(elm:WebElement, tag, attr, value, timeout=Timeout):
+
+def find_all_elm_with_attribute(elm: WebElement, tag, attr, value, timeout=Timeout):
     try:
         target = normalize(value)
         return [
@@ -113,24 +135,58 @@ def find_all_elm_with_attribute(elm:WebElement, tag, attr, value, timeout=Timeou
             for e in elm.find_elements(By.TAG_NAME, tag)
             if e.get_attribute(attr) and (target in normalize(e.get_attribute(attr)))
         ]
-    except (ElementClickInterceptedException, ElementNotInteractableException, JavascriptException, NoSuchElementException) as e:
+    except (
+        ElementClickInterceptedException,
+        ElementNotInteractableException,
+        JavascriptException,
+        NoSuchElementException,
+    ) as e:
         logger.error(f"Exception occurred: {str(e)}")
         return None
 
-def find_elm_with_attribute(elm:WebElement, tag_attr_value:TagAttVl | list[TagAttVl], timeout=Timeout)-> WebElement | None:
+
+def find_elm_with_attribute(
+    elm: WebElement, tag_attr_value: TagAttVl | list[TagAttVl], timeout=Timeout
+) -> WebElement | None:
     if not isinstance(tag_attr_value, list):
-        tag_attr_value = [tag_attr_value]  
+        tag_attr_value = [tag_attr_value]
     for selector in tag_attr_value:
         try:
-            logger.debug(f"Trying to find {selector.attr}")
             target = normalize(selector.vlr)
+            logger.debug(
+                f"Trying to find:{selector.attr}  - with: {selector.tag} and: {target}"
+            )
+            sleep(0.2)
             e = elm.find_element(By.TAG_NAME, selector.tag)
-            if e:
-                if e.get_attribute(selector.attr) and (target in normalize(e.get_attribute(selector.attr))):
-                    sleep(0.3)
-                    return e        
+            if e.get_attribute(selector.attr) and (
+                target in normalize(e.get_attribute(selector.attr))
+            ):
+                logger.debug(
+                    f"Found: {selector.attr} - with: {selector.tag} and: {target}"
+                )
+                sleep(0.4)
+                return e
         except NoSuchElementException:
+            logger.debug(
+                f"Not Found: {selector.attr} - with: {selector.tag} and: {target}"
+            )
             continue
+
+
+def find_elm_picture(elm: WebElement, selector: Selector, timeout=Timeout):
+    try:
+        logger.debug(f"Trying to find:{selector.css}")
+        sleep(0.2)
+        e = WebDriverWait(elm, timeout).until(
+            EC.visibility_of_element_located((By.CSS_SELECTOR, selector.css))
+        )
+        if e:
+            str_picture = e.get_attribute("src")
+            sleep(0.4)
+            return str_picture
+    except NoSuchElementException:
+        logger.debug(f"Not Found: {selector.css}")
+
 
 def find_with_attribute(driver, tag, attr, value, timeout=Timeout):
     try:
@@ -141,9 +197,15 @@ def find_with_attribute(driver, tag, attr, value, timeout=Timeout):
             timeout=timeout,
             label=label,
         )
-    except (ElementClickInterceptedException, ElementNotInteractableException, JavascriptException, NoSuchElementException) as e:
+    except (
+        ElementClickInterceptedException,
+        ElementNotInteractableException,
+        JavascriptException,
+        NoSuchElementException,
+    ) as e:
         logger.error(f"Exception occurred: {str(e)}")
         return None
+
 
 def find_with_text(driver, tag, text, timeout=Timeout):
     try:
@@ -160,9 +222,15 @@ def find_with_text(driver, tag, text, timeout=Timeout):
             ]
 
         return find_it(driver, get, timeout=timeout, label=label)
-    except (ElementClickInterceptedException, ElementNotInteractableException, JavascriptException, NoSuchElementException) as e:
+    except (
+        ElementClickInterceptedException,
+        ElementNotInteractableException,
+        JavascriptException,
+        NoSuchElementException,
+    ) as e:
         logger.error(f"Exception occurred: {str(e)}")
         return None
+
 
 def find_css_with_text(driver, css_selector, text, timeout=Timeout):
     try:
@@ -173,15 +241,23 @@ def find_css_with_text(driver, css_selector, text, timeout=Timeout):
             return [
                 e
                 for e in WebDriverWait(driver, timeout).until(
-                    EC.visibility_of_any_elements_located(locator=[By.CSS_SELECTOR, css_selector])
+                    EC.visibility_of_any_elements_located(
+                        locator=[By.CSS_SELECTOR, css_selector]
+                    )
                 )
                 if target in normalize(e.text)
             ]
 
         return find_it(driver, get, timeout=timeout, label=label)
-    except (ElementClickInterceptedException, ElementNotInteractableException, JavascriptException, NoSuchElementException) as e:
+    except (
+        ElementClickInterceptedException,
+        ElementNotInteractableException,
+        JavascriptException,
+        NoSuchElementException,
+    ) as e:
         logger.error(f"Exception occurred: {str(e)}")
         return None
+
 
 def find_css(driver, css_selector, timeout=Timeout):
     try:
@@ -191,23 +267,38 @@ def find_css(driver, css_selector, timeout=Timeout):
             return [
                 e
                 for e in WebDriverWait(driver, timeout).until(
-                    EC.visibility_of_any_elements_located(locator=[By.CSS_SELECTOR, css_selector])
+                    EC.visibility_of_any_elements_located(
+                        locator=[By.CSS_SELECTOR, css_selector]
+                    )
                 )
             ]
 
         return find_it(driver, elements=get, timeout=timeout, label=label)
-    except (ElementClickInterceptedException, ElementNotInteractableException, JavascriptException, NoSuchElementException) as e:
+    except (
+        ElementClickInterceptedException,
+        ElementNotInteractableException,
+        JavascriptException,
+        NoSuchElementException,
+    ) as e:
         logger.error(f"Exception occurred: {str(e)}")
         return None
+
 
 def find_all_css(driver: WebDriver, css_selector, timeout=Timeout):
     try:
         return driver.find_elements(By.CSS_SELECTOR, css_selector)
-    except (ElementClickInterceptedException, ElementNotInteractableException, JavascriptException, NoSuchElementException) as e:
+    except (
+        ElementClickInterceptedException,
+        ElementNotInteractableException,
+        JavascriptException,
+        NoSuchElementException,
+    ) as e:
         logger.error(f"Exception occurred: {str(e)}")
         return None
 
-def find_element(driver: WebDriver, selectors: Selector | list[Selector], timeout: int = Timeout
+
+def find_element(
+    driver: WebDriver, selectors: Selector | list[Selector], timeout: int = Timeout
 ) -> WebElement | None:
     """
     Find an element by css, text or xpath. If a list of selectors is provided, it will try to find the
@@ -244,7 +335,9 @@ def find_element(driver: WebDriver, selectors: Selector | list[Selector], timeou
         except NoSuchElementException:
             continue
 
-def find_elements(driver: WebDriver, selectors: Selector | list[Selector], timeout: int = Timeout
+
+def find_elements(
+    driver: WebDriver, selectors: Selector | list[Selector], timeout: int = Timeout
 ) -> WebElement | None:
     """
     Find an element by css, text or xpath. If a list of selectors is provided, it will try to find the
@@ -264,7 +357,9 @@ def find_elements(driver: WebDriver, selectors: Selector | list[Selector], timeo
         try:
             if selector.xpath:
                 elm = WebDriverWait(driver, timeout).until(
-                    EC.presence_of_all_elements_located_located(locator=[By.XPATH, selector.xpath])
+                    EC.presence_of_all_elements_located_located(
+                        locator=[By.XPATH, selector.xpath]
+                    )
                 )
             elif selector.css and selector.attr:
                 attr, value = selector.attr
@@ -280,6 +375,7 @@ def find_elements(driver: WebDriver, selectors: Selector | list[Selector], timeo
                 return elm
         except NoSuchElementException:
             continue
+
 
 def select_option(select, option, to_string):
     """
@@ -308,6 +404,7 @@ def select_option(select, option, to_string):
         retry(best.click)
         return True
 
+
 def find_fuzzy(elements, to_string, target):
     return sorted(
         elements,
@@ -316,19 +413,25 @@ def find_fuzzy(elements, to_string, target):
         ).ratio(),
     )[-1]
 
+
 def page_contains(driver, token, timeout=Timeout):
     haystack = (
         WebDriverWait(driver, timeout)
-        .until(EC.visibility_of_any_elements_located(locator=[By.CSS_SELECTOR, "body"]))[0]
+        .until(
+            EC.visibility_of_any_elements_located(locator=[By.CSS_SELECTOR, "body"])
+        )[0]
         .get_attribute("innerHTML")
     )
     return re.search(token, haystack, re.IGNORECASE) is not None
 
+
 def select_option_value(select, option):
     select_option(select, option, lambda op: op.get_attribute("value"))
 
+
 def select_option_text(select, option):
     select_option(select, option, lambda op: op.text)
+
 
 def find_it(driver, elements, timeout=Timeout, label=None):
     def get():
@@ -338,6 +441,7 @@ def find_it(driver, elements, timeout=Timeout, label=None):
         return None
 
     return wait_for(get, timeout=timeout, label=label)
+
 
 def wait_for(fun, timeout=Timeout, label=None):
     """
@@ -361,6 +465,7 @@ def wait_for(fun, timeout=Timeout, label=None):
             t = t + delta
     return fun()
 
+
 def retry(fun, on_fail=lambda: True, sleep_time=1, attempts=RetryAttempts):
     for attempt in range(0, attempts):
         try:
@@ -381,11 +486,14 @@ def retry(fun, on_fail=lambda: True, sleep_time=1, attempts=RetryAttempts):
             )
             sleep(sleep_time)
 
+
 class DontRetryException(Exception):
     pass
 
+
 class KickedOutofFunnelException(DontRetryException):
     pass
+
 
 class Fatal(Exception):
     def __init__(self, e, metadata={}):
