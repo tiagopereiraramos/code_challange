@@ -4,8 +4,6 @@ from RPA.Browser.Selenium import Selenium
 
 from tasks_methods.methods import ExcelOtherMethods, ProducerMethods, ScraperMethods
 
-
-
 @task
 def get_csv_produce_work_item():
     ProducerMethods.read_csv_create_work_item()
