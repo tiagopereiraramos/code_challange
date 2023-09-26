@@ -12,7 +12,7 @@ from datetime import datetime
 import re
 import urllib.request
 from RPA.Excel.Files import Files
-
+from openpyxl import Workbook
 
 class ProducerMethods:
     @staticmethod
@@ -302,14 +302,23 @@ class ExcelOtherMethods:
             return new_list_articles    
     @staticmethod
     def export_excel(list_articles:list[Article]):
-        lib = Files()
         project_dir = str(os.getcwd())
         full_path = os.path.join(project_dir, "devdata", "excel")
-        lib.create_workbook(path=full_path+"Articles.xlsx", fmt="xlsx")
-        lib.create_worksheet(name="Articles",content=Article.articles_to_json(list_articles),header=True)
-        lib.save_workbook(path=full_path+"Articles.xlsx")
+        excel_file_path = full_path+"Articles.xlsx"
+        wb = Workbook()
+        ws = wb.active
+        data = Article.articles_to_json(list_articles)
+        headers = list(data[0].keys())
+        for col_num, header in enumerate(headers, start=1):
+            ws.cell(row=1, column=col_num, value=header)
+        for row_index, row_data in enumerate(data, start=2):
+            for col_index, header in enumerate(headers, start=1):
+                ws.cell(row=row_index, column=col_index, value=row_data[header])
+        wb.save(excel_file_path)
+        logger.info('Excel created')
+        logger.info('Creating Output...')
         workitems.outputs.create(
-            files=[full_path+"Articles.xlsx"]
+            files=[excel_file_path]
         )
         
             
