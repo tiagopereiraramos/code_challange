@@ -6,14 +6,15 @@ channels:
   - conda-forge
 
 dependencies:
-  - python=3.11.5               # https://pyreadiness.org/3.10
-  - pip=23.2.1                    # https://pip.pypa.io/en/stable/news
+  - python=3.11.5               
+  - pip=23.2.1                    
   - truststore=0.8.0 
-  - firefox                 # https://anaconda.org/conda-forge/firefox
-  - geckodriver  
-  - selenium # Certifique-se de usar a versão apropriada do Selenium.
-  - webdrivermanager      # https://github.com/sethmlarson/truststore/blob/main/CHANGELOG.md
+  - firefox==118  
+  - geckodriver               
   - pip:
-    - rpaframework    # https://rpaframework.org/releasenotes.html
-    - robocorp
- # Para instalar automaticamente o geckodriver.
+    - robocorp==1.0.0
+    - pathlib==1.0.1
+    - openpyxl
+    - cdifflib==1.2.6
+    - selenium==4.13
+    - webdriver_manager==4.0.1
