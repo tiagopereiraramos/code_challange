@@ -15,8 +15,10 @@ def scraper_and_output_file():
     pay = ScraperMethods.get_work_item()
     if pay:
         logger.info("The current item from the work item has been retrieved")
-    manager = GeckoDriverManager().install()
-    driver = webdriver.Firefox()
+    GeckoDriverManager().install()
+    opts = webdriver.FirefoxOptions()
+    opts.add_argument("--headless")
+    driver = webdriver.Firefox(options=opts)
     initial_search = ScraperMethods.inicial_search(
         driver=driver, phrase=pay.phrase_test
     )
