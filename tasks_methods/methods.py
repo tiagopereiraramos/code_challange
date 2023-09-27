@@ -318,7 +318,7 @@ class ExcelOtherMethods:
     @staticmethod
     def export_excel(list_articles: list[Article]):
         project_dir = str(os.getcwd())
-        full_path = Path(project_dir, "devdata", "excel")
+        full_path = Path(project_dir, "output")
         excel_file_path = os.path.join(full_path, "Articles.xlsx")
         wb = Workbook()
         ws = wb.active
