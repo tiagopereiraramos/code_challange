@@ -9,7 +9,6 @@ from pathlib import Path
 import robocorp.log as logger
 from openpyxl import Workbook
 from robocorp import storage, workitems
-from robocorp.vault import get_secret
 
 from helpers.article import Article
 from helpers.payload import Payload
@@ -159,7 +158,7 @@ class ScraperMethods:
                     )
                     if combo_sort:
                         center_element(driver, combo_sort)
-                        combo_sort.click()
+                        js_click(driver, combo_sort)
                         #!LEGEND: 0= Newest 1= Older 2= Relevance
                         if sort_by == 0:
                             sort_by_str = "Newest"
@@ -169,7 +168,6 @@ class ScraperMethods:
                             sort_by_str = "Relevance"
                         else:
                             sort_by_str = "Newest"
-                        combo_sort.click()
                         find_sort_by = find_element(
                             driver,
                             Selector(css="li", attr=["data-key", f"{sort_by_str}"]),

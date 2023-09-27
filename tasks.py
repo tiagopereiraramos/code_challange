@@ -1,7 +1,7 @@
 import robocorp.log as logger
 from robocorp.tasks import task
 from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
 
 from tasks_methods.methods import ExcelOtherMethods, ProducerMethods, ScraperMethods
 
@@ -15,9 +15,8 @@ def scraper_and_output_file():
     pay = ScraperMethods.get_work_item()
     if pay:
         logger.info("The current item from the work item has been retrieved")
-    chrome_manager = ChromeDriverManager()
-    chrome_manager.install()
-    driver = webdriver.Chrome()
+    manager = GeckoDriverManager().install()
+    driver = webdriver.Firefox()
     initial_search = ScraperMethods.inicial_search(
         driver=driver, phrase=pay.phrase_test
     )
