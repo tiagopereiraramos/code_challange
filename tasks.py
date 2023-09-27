@@ -18,7 +18,7 @@ def scraper_and_output_file():
     ChromeDriverManager().install()
     opts = webdriver.ChromeOptions()
     opts.add_argument("--headless")
-    driver = webdriver.Chrome(options=opts)
+    driver=webdriver.Chrome(ChromeDriverManager(version='114.0.5735.90', options=opts).install())
     initial_search = ScraperMethods.inicial_search(
         driver=driver, phrase=pay.phrase_test
     )

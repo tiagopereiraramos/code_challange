@@ -9,8 +9,7 @@ dependencies:
   - python=3.11.5               
   - pip=23.2.1
   - python-chromedriver-binary                  
-  - truststore=0.8.0  
-  - geckodriver               
+  - truststore=0.8.0              
   - pip:
     - robocorp==1.0.0
     - pathlib==1.0.1
