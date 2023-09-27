@@ -15,10 +15,10 @@ def scraper_and_output_file():
     pay = ScraperMethods.get_work_item()
     if pay:
         logger.info("The current item from the work item has been retrieved")
-    ChromeDriverManager().install()
+    ChromeDriverManager(driver_version='114.0.5735.90').install()
     opts = webdriver.ChromeOptions()
     opts.add_argument("--headless")
-    driver=webdriver.Chrome(ChromeDriverManager(version='114.0.5735.90', options=opts).install())
+    driver=webdriver.Chrome(options=opts)
     initial_search = ScraperMethods.inicial_search(
         driver=driver, phrase=pay.phrase_test
     )
