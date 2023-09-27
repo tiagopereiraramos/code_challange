@@ -15,7 +15,7 @@ def scraper_and_output_file():
     pay = ScraperMethods.get_work_item()
     if pay:
         logger.info("The current item from the work item has been retrieved")
-    ChromeDriverManager(driver_version='114.0.5735.90').install()
+    ChromeDriverManager(driver_version='117.0.5938.92').install()
     opts = webdriver.ChromeOptions()
     opts.add_argument("--headless")
     driver=webdriver.Chrome(options=opts)
