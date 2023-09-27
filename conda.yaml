@@ -4,16 +4,17 @@
 
 channels:
   - conda-forge
-
+  
 dependencies:
   - python=3.11.5               
-  - pip=23.2.1                    
-  - truststore=0.8.0 
-  - firefox==118  
+  - pip=23.2.1
+  - python-chromedriver-binary                  
+  - truststore=0.8.0  
   - geckodriver               
   - pip:
     - robocorp==1.0.0
     - pathlib==1.0.1
+    - chromedriver-binary-auto
     - openpyxl
     - cdifflib==1.2.6
     - selenium==4.13
