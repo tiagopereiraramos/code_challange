@@ -10,9 +10,10 @@ dependencies:
   - pip=23.2.1                    # https://pip.pypa.io/en/stable/news
   - truststore=0.8.0 
   - firefox                 # https://anaconda.org/conda-forge/firefox
-  - geckodriver            # https://github.com/sethmlarson/truststore/blob/main/CHANGELOG.md
+  - geckodriver  
+  - selenium # Certifique-se de usar a versão apropriada do Selenium.
+  - webdrivermanager      # https://github.com/sethmlarson/truststore/blob/main/CHANGELOG.md
   - pip:
     - rpaframework    # https://rpaframework.org/releasenotes.html
     - robocorp
-    - selenium # Certifique-se de usar a versão apropriada do Selenium.
-    - geckodriver-autoinstaller==3.0.0  # Para instalar automaticamente o geckodriver.
+ # Para instalar automaticamente o geckodriver.
