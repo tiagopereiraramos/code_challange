@@ -5,18 +5,18 @@ import traceback
 from time import sleep
 
 import robocorp.log as logger
-from selenium.common import (
-    ElementClickInterceptedException,
-    ElementNotInteractableException,
-    JavascriptException,
-    NoSuchElementException,
-)
+from selenium import webdriver
+from selenium.common import (ElementClickInterceptedException,
+                             ElementNotInteractableException,
+                             JavascriptException, NoSuchElementException)
 from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from webdriver_manager.firefox import GeckoDriverManager
 
 from helpers.selector import Selector, TagAttVl
 
@@ -25,6 +25,15 @@ from helpers.selector import Selector, TagAttVl
 Timeout = 5
 RetryAttempts = 4
 
+
+
+def get_driver():
+    firefox_options =webdriver.FirefoxOptions()
+    firefox_options.add_argument("--headless")
+    # Configurar opções do Firefox, se necessário
+    service = Service(GeckoDriverManager().install())
+    driver = webdriver.Firefox(service=service, options=firefox_options)
+    return driver
 
 def normalize(t: str) -> str:
     return t.lower().strip()

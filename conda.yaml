@@ -1,20 +1,17 @@
-# For more details on the format and content:
-# https://github.com/robocorp/rcc/blob/master/docs/recipes.md#what-is-in-condayaml
-# Tip: Adding a link to the release notes of the packages helps maintenance and security.
-
 channels:
   - conda-forge
-  
+
 dependencies:
-  - python=3.11.5               
+  - python=3.11.5
   - pip=23.2.1
-  - python-chromedriver-binary                  
-  - truststore=0.8.0              
+  - truststore=0.8.0
+  - firefox==118
   - pip:
     - robocorp==1.0.0
     - pathlib==1.0.1
-    - chromedriver-binary-auto
     - openpyxl
     - cdifflib==1.2.6
     - selenium==4.13
     - webdriver_manager==4.0.1
+
+
