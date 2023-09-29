@@ -74,12 +74,21 @@ class ScraperMethods:
                 options.add_argument("--headless")
                 options.add_argument("--disable-dev-shm-usage")
                 options.add_argument("--no-sandbox") 
+                options.add_argument("--disable-blink-features=AutomationControlled")
+                # Exclude the collection of enable-automation switches 
+                options.add_experimental_option("excludeSwitches", ["enable-automation"]) 
+                # Turn-off userAutomationExtension 
+                options.add_experimental_option("useAutomationExtension", False) 
                 driver.open_browser(
                     url=site_url,
                     browser='chrome',
                     options=options,
                     executable_path= get_chromedriver_path()  
                 )
+                driver.delete_all_cookies()
+                # driver.set_window_size(1920, 1080)
+                driver.driver.execute_script(
+                    'Object.defineProperty(navigator, "webdriver", {get: () => undefined})')
                 search = find_element(
                     driver.driver, Selector(css='button[aria-label="Open search bar"]')
                 )
