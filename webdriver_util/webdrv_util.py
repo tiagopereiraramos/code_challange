@@ -1,23 +1,22 @@
 import difflib
+import os
+import platform
 import random
 import re
 import traceback
 from time import sleep
-import os
+
 import robocorp.log as logger
-from selenium import webdriver
+from RPA.Browser.Selenium import Selenium
 from selenium.common import (ElementClickInterceptedException,
                              ElementNotInteractableException,
                              JavascriptException, NoSuchElementException)
 from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
-
 
 from helpers.selector import Selector, TagAttVl
 
@@ -26,33 +25,27 @@ from helpers.selector import Selector, TagAttVl
 Timeout = 5
 RetryAttempts = 4
 
-def is_chromedriver_present(driver_dir):
-    # Lista os arquivos no diretório 'driver'
-    files = os.listdir(driver_dir)
+
+
+def get_chromedriver_path():
+    current_platform = platform.system()
     
-    # Verifica se há algum arquivo com o nome 'chromedriver' no diretório
-    return 'chromedriver' in files
+    if current_platform == "Linux":
+        chromedriver_path = os.path.join(os.path.abspath("bin"), "chromedriver")
+    elif current_platform == "Windows":
+        chromedriver_path = os.path.join(os.path.abspath("bin"), "chromedriver.exe")
+    else:
+        raise Exception(f"Plataforma {current_platform} não suportada")
+    
+    if not os.path.exists(chromedriver_path):
+        raise Exception("Chromedriver not found")
+    
+    return chromedriver_path
 
 def get_chromedriver():
-    # Verificar se o diretório 'driver' existe
-    driver_dir = 'chromedriver-linux64'
-
-    options =webdriver.ChromeOptions()
-    options.add_argument("--headless")
-    chromedriver_path = os.path.join(driver_dir, 'chromedriver')
-    service = Service(executable_path=chromedriver_path)
-    driver = webdriver.Chrome(options=options, service=service)
-    
+    driver = Selenium()
+    driver.headless = True
     return driver
-
-""" def get_driver():
-    options =webdriver.ChromeOptions()
-    options.add_argument("--headless")
-    
-
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(options=options, service=service)
-    return driver """
 
 def normalize(t: str) -> str:
     return t.lower().strip()

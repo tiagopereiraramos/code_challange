@@ -2,8 +2,6 @@
 # https://github.com/robocorp/rcc/blob/master/docs/recipes.md#what-is-in-robotyaml
 
 tasks:
-  install_chrome_and_chromedriver:
-    shell: install_browser_driver.sh
   ReadCSV:
     shell: python -m robocorp.tasks run tasks.py -t get_csv_produce_work_item
   ReutersScraper:

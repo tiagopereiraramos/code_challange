@@ -5,12 +5,13 @@ dependencies:
   - python=3.11.5
   - pip=23.2.1
   - truststore=0.8.0
-  - python-chromedriver-binary
   - pip:
+    - webdrivermanager
+    - rpaframework==27.2.1 
+    - robotframework-seleniumlibrary
     - robocorp==1.0.0
     - pathlib==1.0.1
     - openpyxl
     - cdifflib==1.2.6
-    - selenium==4.13.0
-    - webdriver_manager
+
 
