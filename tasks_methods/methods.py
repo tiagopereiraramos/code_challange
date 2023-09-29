@@ -72,12 +72,11 @@ class ScraperMethods:
                 logger.info(f"Open URL: {site_url}")
                 options = Options()
                 options.add_argument("--headless")
-                options.add_argument("--start-maximized")
                 options.add_argument("--disable-dev-shm-usage")
                 options.add_argument("--no-sandbox") 
                 driver.open_browser(
                     url=site_url,
-                    browser='headlesschrome',
+                    browser='chrome',
                     options=options,
                     executable_path= get_chromedriver_path()  
                 )
@@ -86,7 +85,7 @@ class ScraperMethods:
                 )
                 if search:
                     center_element(driver.driver, search)
-                    js_click(driver.driver, search)
+                    
                     search_field = find_element(
                         driver.driver,
                         Selector(css="input[aria-labelledby*=react-aria]"),

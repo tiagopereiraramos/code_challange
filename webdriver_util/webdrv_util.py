@@ -111,7 +111,7 @@ def js_click(driver, elm):
         JavascriptException,
         NoSuchElementException,
     ) as e:
-        logger.error(f"Exception occurred: {str(e)}")
+        logger.critical(f"Exception occurred: {str(e)}")
         return None
 
 
@@ -124,7 +124,7 @@ def find_with_label(driver, tag, label, timeout=Timeout):
         JavascriptException,
         NoSuchElementException,
     ) as e:
-        logger.error(f"Exception occurred: {str(e)}")
+        logger.critical(f"Exception occurred: {str(e)}")
         return None
 
 
@@ -144,7 +144,7 @@ def find_all_with_attribute(driver, tag, attr, value, timeout=Timeout):
         JavascriptException,
         NoSuchElementException,
     ) as e:
-        logger.error(f"Exception occurred: {str(e)}")
+        logger.critical(f"Exception occurred: {str(e)}")
         return None
 
 
@@ -162,7 +162,7 @@ def find_all_elm_with_attribute(elm: WebElement, tag, attr, value, timeout=Timeo
         JavascriptException,
         NoSuchElementException,
     ) as e:
-        logger.error(f"Exception occurred: {str(e)}")
+        logger.critical(f"Exception occurred: {str(e)}")
         return None
 
 
@@ -224,7 +224,7 @@ def find_with_attribute(driver, tag, attr, value, timeout=Timeout):
         JavascriptException,
         NoSuchElementException,
     ) as e:
-        logger.error(f"Exception occurred: {str(e)}")
+        logger.critical(f"Exception occurred: {str(e)}")
         return None
 
 
@@ -249,7 +249,7 @@ def find_with_text(driver, tag, text, timeout=Timeout):
         JavascriptException,
         NoSuchElementException,
     ) as e:
-        logger.error(f"Exception occurred: {str(e)}")
+        logger.critical(f"Exception occurred: {str(e)}")
         return None
 
 
@@ -276,7 +276,7 @@ def find_css_with_text(driver, css_selector, text, timeout=Timeout):
         JavascriptException,
         NoSuchElementException,
     ) as e:
-        logger.error(f"Exception occurred: {str(e)}")
+        logger.critical(f"Exception occurred: {str(e)}")
         return None
 
 
@@ -301,7 +301,7 @@ def find_css(driver, css_selector, timeout=Timeout):
         JavascriptException,
         NoSuchElementException,
     ) as e:
-        logger.error(f"Exception occurred: {str(e)}")
+        logger.critical(f"Exception occurred: {str(e)}")
         return None
 
 
@@ -314,7 +314,7 @@ def find_all_css(driver: WebDriver, css_selector, timeout=Timeout):
         JavascriptException,
         NoSuchElementException,
     ) as e:
-        logger.error(f"Exception occurred: {str(e)}")
+        logger.critical(f"Exception occurred: {str(e)}")
         return None
 
 
