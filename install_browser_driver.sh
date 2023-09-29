@@ -16,21 +16,21 @@ check_install_dependency "wget" "wget"
 check_install_dependency "unzip" "unzip"
 check_install_dependency "curl" "curl"
 
-# Instalar o Google Chrome Stable
-wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-sudo dpkg -i google-chrome-stable_current_amd64.deb
+# Especificar a versão do Google Chrome desejada
+CHROME_VERSION="117.0.5938.62-1"  # Substitua pela versão desejada
+
+# Baixar e instalar o Google Chrome Stable na versão especificada
+#http://170.210.201.179/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_117.0.5938.62-1_amd64.deb
+wget "https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb"
+sudo dpkg -i "google-chrome-stable_${CHROME_VERSION}_amd64.deb"
 sudo apt-get install -f -y
 
 # Baixar e instalar o Chromedriver compatível com a versão do Chrome
-CHROME_VERSION=$(google-chrome-stable --version | awk '{print $3}')
 CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION")
-wget "https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip"
-unzip chromedriver_linux64.zip
-chmod +x chromedriver
+wget "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/117.0.5938.92/linux64/chromedriver-linux64.zip"
+unzip chromedriver-linux64.zip
+chmod +x chromedriver-linux64/chromedriver
 
-# Mover o Chromedriver para uma pasta específica do projeto
-DEST_DIR="/driver"
-mv chromedriver "$DEST_DIR"
 
 # Limpar arquivos de instalação desnecessários
-rm -rf google-chrome-stable_current_amd64.deb chromedriver_linux64.zip
+rm -rf "google-chrome-stable_${CHROME_VERSION}_amd64.deb" chromedriver-linux64.zip
