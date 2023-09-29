@@ -11,12 +11,13 @@ from selenium.common import (ElementClickInterceptedException,
                              JavascriptException, NoSuchElementException)
 from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from webdriver_manager.firefox import GeckoDriverManager
+from webdriver_manager.chrome import ChromeDriverManager
+
 
 from helpers.selector import Selector, TagAttVl
 
@@ -28,11 +29,12 @@ RetryAttempts = 4
 
 
 def get_driver():
-    firefox_options =webdriver.FirefoxOptions()
-    firefox_options.add_argument("--headless")
+    options =webdriver.ChromeOptions()
+    options.add_argument("--headless")
+    
     # Configurar opções do Firefox, se necessário
-    service = Service(GeckoDriverManager().install())
-    driver = webdriver.Firefox(service=service, options=firefox_options)
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(options=options, service=service)
     return driver
 
 def normalize(t: str) -> str:
