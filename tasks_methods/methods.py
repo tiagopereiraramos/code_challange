@@ -85,7 +85,8 @@ class ScraperMethods:
                     driver.driver, Selector(css='button[aria-label="Open search bar"]')
                 )
                 if search:
-                    search.click()
+                    center_element(driver.driver, search)
+                    js_click(driver.driver, search)
                     search_field = find_element(
                         driver.driver,
                         Selector(css="input[aria-labelledby*=react-aria]"),
