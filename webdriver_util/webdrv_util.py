@@ -35,17 +35,13 @@ def is_chromedriver_present(driver_dir):
 
 def get_chromedriver():
     # Verificar se o diretório 'driver' existe
-    driver_dir = 'driver'
-    if not os.path.exists(driver_dir) or not is_chromedriver_present(driver_dir):
-        logger.warn(f'O arquivo chromedriver não foi encontrado no diretório {driver_dir}. Baixando o Chromedriver...')
-        options =webdriver.ChromeOptions()
-        options.add_argument("--headless")
-        service = Service(ChromeDriverManager().install())
-        driver = webdriver.Chrome(options=options, service=service)
-    else:
-        # Se o diretório 'driver' existir e o arquivo chromedriver estiver presente, use-o
-        chromedriver_path = os.path.join(driver_dir, 'chromedriver')
-        driver = webdriver.Chrome(executable_path=chromedriver_path)
+    driver_dir = 'chromedriver-linux64'
+
+    options =webdriver.ChromeOptions()
+    options.add_argument("--headless")
+    chromedriver_path = os.path.join(driver_dir, 'chromedriver')
+    service = Service(executable_path=chromedriver_path)
+    driver = webdriver.Chrome(options=options, service=service)
     
     return driver
 
