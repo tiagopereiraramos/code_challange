@@ -85,7 +85,7 @@ class ScraperMethods:
                 )
                 if search:
                     center_element(driver.driver, search)
-                    
+                    search.click()
                     search_field = find_element(
                         driver.driver,
                         Selector(css="input[aria-labelledby*=react-aria]"),
