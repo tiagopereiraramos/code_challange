@@ -3,7 +3,7 @@ import random
 import re
 import traceback
 from time import sleep
-
+import os
 import robocorp.log as logger
 from selenium import webdriver
 from selenium.common import (ElementClickInterceptedException,
@@ -26,16 +26,37 @@ from helpers.selector import Selector, TagAttVl
 Timeout = 5
 RetryAttempts = 4
 
+def is_chromedriver_present(driver_dir):
+    # Lista os arquivos no diretório 'driver'
+    files = os.listdir(driver_dir)
+    
+    # Verifica se há algum arquivo com o nome 'chromedriver' no diretório
+    return 'chromedriver' in files
 
+def get_chromedriver():
+    # Verificar se o diretório 'driver' existe
+    driver_dir = 'driver'
+    if not os.path.exists(driver_dir) or not is_chromedriver_present(driver_dir):
+        logger.warn(f'O arquivo chromedriver não foi encontrado no diretório {driver_dir}. Baixando o Chromedriver...')
+        options =webdriver.ChromeOptions()
+        options.add_argument("--headless")
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(options=options, service=service)
+    else:
+        # Se o diretório 'driver' existir e o arquivo chromedriver estiver presente, use-o
+        chromedriver_path = os.path.join(driver_dir, 'chromedriver')
+        driver = webdriver.Chrome(executable_path=chromedriver_path)
+    
+    return driver
 
-def get_driver():
+""" def get_driver():
     options =webdriver.ChromeOptions()
     options.add_argument("--headless")
     
-    # Configurar opções do Firefox, se necessário
+
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(options=options, service=service)
-    return driver
+    return driver """
 
 def normalize(t: str) -> str:
     return t.lower().strip()

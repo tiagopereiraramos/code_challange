@@ -5,6 +5,7 @@ dependencies:
   - python=3.11.5
   - pip=23.2.1
   - truststore=0.8.0
+  - python-chromedriver-binary
   - pip:
     - robocorp==1.0.0
     - pathlib==1.0.1
