@@ -80,6 +80,7 @@ class ScraperMethods:
                 options.add_experimental_option("excludeSwitches", ["enable-automation"]) 
                 # Turn-off userAutomationExtension 
                 options.add_experimental_option("useAutomationExtension", False) 
+                
                 driver.open_browser(
                     url=site_url,
                     browser='chrome',
@@ -90,6 +91,16 @@ class ScraperMethods:
                 # driver.set_window_size(1920, 1080)
                 driver.driver.execute_script(
                     'Object.defineProperty(navigator, "webdriver", {get: () => undefined})')
+                
+                driver.execute_cdp(
+                    "Network.setUserAgentOverride",
+                    {
+                        "userAgent":
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/117.0.0.0 Safari/537.36"
+                            }
+                    )
+                logger.info(driver.execute_javascript("return navigator.userAgent;"))
+                
                 search = find_element(
                     driver.driver, Selector(css='button[aria-label="Open search bar"]')
                 )

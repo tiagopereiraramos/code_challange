@@ -5,6 +5,7 @@ import random
 import re
 import traceback
 from time import sleep
+import subprocess
 
 import robocorp.log as logger
 from RPA.Browser.Selenium import Selenium
@@ -17,14 +18,13 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-
 from helpers.selector import Selector, TagAttVl
+
 
 # *This is my personal lib with selenium methods that help me scraper better.
 
 Timeout = 5
 RetryAttempts = 4
-
 
 
 def get_chromedriver_path():
@@ -44,7 +44,7 @@ def get_chromedriver_path():
 
 def get_chromedriver():
     driver = Selenium()
-    driver.headless = True
+    driver.headless = True    
     return driver
 
 def normalize(t: str) -> str:
