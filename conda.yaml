@@ -6,12 +6,10 @@ dependencies:
   - pip=23.2.1
   - truststore=0.8.0
   - pip:
-    - webdrivermanager
-    - rpaframework==27.2.1 
+    - openpyxl 
     - robotframework-seleniumlibrary
     - robocorp==1.0.0
-    - pathlib==1.0.1
-    - openpyxl
-    - cdifflib==1.2.6
+
+
 
 
