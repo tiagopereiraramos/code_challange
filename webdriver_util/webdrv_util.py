@@ -11,7 +11,9 @@ import robocorp.log as logger
 from RPA.Browser.Selenium import Selenium
 from selenium.common import (ElementClickInterceptedException,
                              ElementNotInteractableException,
-                             JavascriptException, NoSuchElementException)
+                             JavascriptException, 
+                             NoSuchElementException, 
+                             TimeoutException)
 from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -113,7 +115,49 @@ def js_click(driver, elm):
     ) as e:
         logger.critical(f"Exception occurred: {str(e)}")
         return None
+def find_onetrust(driver):
+    try:
+        onetrust = find_element(
+                        driver,
+                        Selector(css='div[class*="onetrust-pc-dark-filter ot-fade-in"]'),
+                    )
+        if onetrust:
+            driver.driver.execute_script("arguments[0].remove();", onetrust)
+            return True
+    except (
+        ElementClickInterceptedException,
+        ElementNotInteractableException,
+        JavascriptException,
+        NoSuchElementException,
+        TimeoutException
+    ) as e:
+        logger.critical(f"Exception occurred: {str(e)}")
+        return False
 
+def click_elm(driver, elm, timeout=Timeout):
+    try:
+        label = "Trying to click"
+
+        def get():
+            return [
+                 WebDriverWait(driver, timeout).until(
+                    EC.element_to_be_clickable(elm)
+                )
+            ]
+        element_to_click =  find_it(driver, elements=get, timeout=timeout, label=label)
+        if element_to_click:
+            find_onetrust(driver)
+            return element_to_click.click()
+        else:
+            return None
+    except (
+        ElementClickInterceptedException,
+        ElementNotInteractableException,
+        JavascriptException,
+        NoSuchElementException,
+    ) as e:
+        logger.critical(f"Exception occurred: {str(e)}")
+        return None
 
 def find_with_label(driver, tag, label, timeout=Timeout):
     try:

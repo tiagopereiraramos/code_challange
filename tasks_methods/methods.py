@@ -16,6 +16,7 @@ from helpers.selector import Selector
 from webdriver_util.webdrv_util import *
 from selenium.webdriver.chrome.options import Options
 
+
 class ProducerMethods:
     @staticmethod
     def read_csv_create_work_item():
@@ -73,40 +74,42 @@ class ScraperMethods:
                 options = Options()
                 options.add_argument("--headless")
                 options.add_argument("--disable-dev-shm-usage")
-                options.add_argument("--no-sandbox") 
+                options.add_argument("--no-sandbox")
                 options.add_argument("--disable-blink-features=AutomationControlled")
                 options.add_argument("--window-size=1920,1080")
-                # Exclude the collection of enable-automation switches 
-                options.add_experimental_option("excludeSwitches", ["enable-automation"]) 
-                # Turn-off userAutomationExtension 
-                options.add_experimental_option("useAutomationExtension", False) 
-                
+                # Exclude the collection of enable-automation switches
+                options.add_experimental_option(
+                    "excludeSwitches", ["enable-automation"]
+                )
+                # Turn-off userAutomationExtension
+                options.add_experimental_option("useAutomationExtension", False)
+
                 driver.open_browser(
                     url=site_url,
-                    browser='chrome',
+                    browser="chrome",
                     options=options,
-                    executable_path= get_chromedriver_path()  
+                    executable_path=get_chromedriver_path(),
                 )
                 driver.delete_all_cookies()
                 # driver.set_window_size(1920, 1080)
                 driver.driver.execute_script(
-                    'Object.defineProperty(navigator, "webdriver", {get: () => undefined})')
-                
+                    'Object.defineProperty(navigator, "webdriver", {get: () => undefined})'
+                )
+
                 driver.execute_cdp(
                     "Network.setUserAgentOverride",
                     {
-                        "userAgent":
-                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/117.0.0.0 Safari/537.36"
-                            }
-                    )
+                        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/117.0.0.0 Safari/537.36"
+                    },
+                )
                 logger.info(driver.execute_javascript("return navigator.userAgent;"))
-                
+
                 search = find_element(
                     driver.driver, Selector(css='button[aria-label="Open search bar"]')
                 )
                 if search:
                     center_element(driver.driver, search)
-                    search.click()
+                    click_elm(driver.driver, search)
                     search_field = find_element(
                         driver.driver,
                         Selector(css="input[aria-labelledby*=react-aria]"),
@@ -119,7 +122,7 @@ class ScraperMethods:
                                 Selector(css="button[aria-label='Search']"),
                             )
                             if button_search:
-                                button_search.click()
+                                click_elm(driver.driver, button_search)
                                 return True
         except Exception as e:
             print(e.with_traceback())
@@ -151,13 +154,13 @@ class ScraperMethods:
                         )
                         if combo_section:
                             center_element(driver.driver, combo_section)
-                            combo_section.click()
+                            click_elm(driver.driver, combo_section)
                             find_section = find_element(
                                 driver.driver,
                                 Selector(css="li", attr=["data-key", f"{section}"]),
                             )
                             if find_section:
-                                find_section.click()
+                                click_elm(driver.driver, find_section)
                                 sleep(3)
                 if data_range >= 0:
                     combo_data_range = find_element(
@@ -165,7 +168,7 @@ class ScraperMethods:
                     )
                     if combo_data_range:
                         center_element(driver.driver, combo_data_range)
-                        combo_data_range.click()
+                        click_elm(driver.driver, combo_data_range)
                         #!LEGEND: 0= Past 24 hours 1= Past week 2= Past month 3= Past year
                         if data_range == 0:
                             data_range_str = "Past 24 hours"
@@ -180,7 +183,7 @@ class ScraperMethods:
                             Selector(css="li", attr=["data-key", f"{data_range_str}"]),
                         )
                         if find_data_range:
-                            find_data_range.click()
+                            click_elm(driver.driver, find_data_range)
                             sleep(3)
                 if sort_by >= 0:
                     combo_sort = find_element(
@@ -188,7 +191,7 @@ class ScraperMethods:
                     )
                     if combo_sort:
                         center_element(driver.driver, combo_sort)
-                        js_click(driver.driver, combo_sort)
+                        click_elm(driver.driver, combo_sort)
                         #!LEGEND: 0= Newest 1= Older 2= Relevance
                         if sort_by == 0:
                             sort_by_str = "Newest"
@@ -203,7 +206,7 @@ class ScraperMethods:
                             Selector(css="li", attr=["data-key", f"{sort_by_str}"]),
                         )
                         if find_sort_by:
-                            find_sort_by.click()
+                            click_elm(driver.driver, find_sort_by)
                             sleep(3)
                             return True
 
@@ -276,7 +279,7 @@ class ScraperMethods:
                             )
                             if button_next:
                                 center_element(driver.driver, button_next)
-                                button_next.click()
+                                click_elm(driver.driver, button_next)
                         except:
                             button_next = find_element(
                                 driver.driver,
