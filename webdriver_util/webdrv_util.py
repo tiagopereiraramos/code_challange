@@ -1,11 +1,9 @@
-import difflib
 import os
 import platform
 import random
 import re
 import traceback
 from time import sleep
-import subprocess
 
 import robocorp.log as logger
 from RPA.Browser.Selenium import Selenium
@@ -400,85 +398,6 @@ def find_element(
         except NoSuchElementException:
             continue
 
-
-def find_elements(
-    driver: WebDriver, selectors: Selector | list[Selector], timeout: int = Timeout
-) -> WebElement | None:
-    """
-    Find an element by css, text or xpath. If a list of selectors is provided, it will try to find the
-    first one that matches.
-
-    :param driver: chrome driver
-    :param selectors: list of Selectors
-    :param timeout: timeout in seconds
-    :return: the element if found, None otherwise
-    """
-    if not isinstance(selectors, list):
-        selectors = [selectors]
-
-    for selector in selectors:
-        elm = None
-        logger.debug(f"Trying to find {selector.css}")
-        try:
-            if selector.xpath:
-                elm = WebDriverWait(driver, timeout).until(
-                    EC.presence_of_all_elements_located_located(
-                        locator=[By.XPATH, selector.xpath]
-                    )
-                )
-            elif selector.css and selector.attr:
-                attr, value = selector.attr
-                elm = find_with_attribute(driver, selector.css, attr, value, timeout)
-            elif selector.css and selector.text:
-                elm = find_css_with_text(
-                    driver, selector.css, selector.text, timeout=timeout
-                )
-            elif selector.css:
-                elm = find_all_css(driver, selector.css, timeout=timeout)
-            if elm:
-                logger.debug(f"Found element: {elm}")
-                return elm
-        except NoSuchElementException:
-            continue
-
-
-def select_option(select, option, to_string):
-    """
-    Selects an option in a select element. If the option is not found, it will try to find the best
-    match using fuzzy matching.
-
-    :param select: Selenium element
-    :param option: option to select
-    :param to_string: function to convert an option to a string (i.e. could be based in the text
-        or the value)
-    """
-    if not select:
-        return False
-    retry(select.click)
-    sleep(0.5)
-
-    possible_options = sorted(
-        select.find_elements(By.TAG_NAME, "option"),
-        key=lambda op: difflib.SequenceMatcher(
-            None, normalize(to_string(op)), normalize(str(option))
-        ).ratio(),
-        reverse=True,
-    )
-    if possible_options:
-        best = possible_options[0]
-        retry(best.click)
-        return True
-
-
-def find_fuzzy(elements, to_string, target):
-    return sorted(
-        elements,
-        key=lambda op: difflib.SequenceMatcher(
-            None, normalize(to_string(op)), normalize(target)
-        ).ratio(),
-    )[-1]
-
-
 def page_contains(driver, token, timeout=Timeout):
     haystack = (
         WebDriverWait(driver, timeout)
@@ -488,14 +407,6 @@ def page_contains(driver, token, timeout=Timeout):
         .get_attribute("innerHTML")
     )
     return re.search(token, haystack, re.IGNORECASE) is not None
-
-
-def select_option_value(select, option):
-    select_option(select, option, lambda op: op.get_attribute("value"))
-
-
-def select_option_text(select, option):
-    select_option(select, option, lambda op: op.text)
 
 
 def find_it(driver, elements, timeout=Timeout, label=None):
