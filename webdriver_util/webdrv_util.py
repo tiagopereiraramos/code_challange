@@ -122,7 +122,7 @@ def find_onetrust(driver):
                         Selector(css='div[class*="onetrust-pc-dark-filter ot-fade-in"]'),
                     )
         if onetrust:
-            driver.driver.execute_script("arguments[0].remove();", onetrust)
+            driver.execute_script("arguments[0].remove();", onetrust)
             return True
     except (
         ElementClickInterceptedException,
