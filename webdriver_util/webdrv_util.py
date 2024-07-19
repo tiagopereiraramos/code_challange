@@ -1,4 +1,3 @@
-import difflib
 import os
 import platform
 import random
@@ -647,14 +646,6 @@ def page_contains(driver, token, timeout=Timeout):
         .get_attribute("innerHTML")
     )
     return re.search(token, haystack, re.IGNORECASE) is not None
-
-
-def select_option_value(select, option):
-    select_option(select, option, lambda op: op.get_attribute("value"))
-
-
-def select_option_text(select, option):
-    select_option(select, option, lambda op: op.text)
 
 
 def find_it(driver, elements, timeout=Timeout, label=None):
