@@ -4,11 +4,13 @@ import platform
 import random
 import re
 import traceback
+import requests
 from time import sleep
 import subprocess
-
-import robocorp.log as logger
+from dotenv import load_dotenv
 from RPA.Browser.Selenium import Selenium
+from Log.logs import Logs
+import time
 from selenium.common import (ElementClickInterceptedException,
                              ElementNotInteractableException,
                              JavascriptException, 
@@ -21,37 +23,202 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from helpers.selector import Selector, TagAttVl
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.proxy import Proxy, ProxyType
 
 
 # *This is my personal lib with selenium methods that help me scraper better.
-
+load_dotenv("config\.env")
 Timeout = 5
-RetryAttempts = 4
+RetryAttempts = 2
+logger = Logs.Returnlog(os.getenv("name_app"), "Scrapping")
 
 
-def get_chromedriver_path():
-    current_platform = platform.system()
-    
-    if current_platform == "Linux":
-        chromedriver_path = os.path.join(os.path.abspath("bin"), "chromedriver")
-    elif current_platform == "Windows":
-        chromedriver_path = os.path.join(os.path.abspath("bin"), "chromedriver.exe")
-    else:
-        raise Exception(f"Plataforma {current_platform} não suportada")
-    
-    if not os.path.exists(chromedriver_path):
-        raise Exception("Chromedriver not found")
-    
-    return chromedriver_path
+def extract_names_from_list_items(driver):  
+    # Encontre todos os elementos <span> que são filhos de <li> dentro do contexto fornecido  
+    spans = driver.driver.find_elements(By.XPATH, "//div[@class='search-filter-menu-wrapper']//li//span")  
+      
+    # Extraia o texto de cada elemento <span>  
+    names = [span.text for span in spans if span.text.strip()] 
+      
+    return names   
 
-def get_chromedriver():
-    driver = Selenium()
-    driver.headless = True    
-    return driver
+def search_and_click_topics(driver, names: list, target_name):
+    best_match_name = find_fuzzy(names, lambda x: x, target_name)    
+    if not len(best_match_name.strip())>0: 
+        logger.error(f"Topic not found '{target_name}'.")
+        return False, True
+    else:      
+        try:  
+            span = find_element(
+                driver,
+                Selector(xpath= f"//div[@class='search-filter-menu-wrapper']//li//span[text()='{best_match_name}']")
+                )
+              
+            span.click()  
+            logger.info(f"Element '{best_match_name}' was clicked.")
+            return True, True
+        except NoSuchElementException:  
+            print(f"Element '{best_match_name}' not found.")  
+            return False, False
+  
+        
+
+def get_free_proxy(source='us_proxy'):  
+    """  
+    Obtém uma lista de proxies gratuitos da web.  
+  
+    Args:  
+        source (str): A fonte dos proxies ('us_proxy', 'free_proxy_list', 'ssl_proxies').  
+  
+    Returns:  
+        tuple: Um proxy (IP, porta) se encontrado; caso contrário, None.  
+    """  
+    try:  
+        if source == 'us_proxy':  
+            url = "https://www.us-proxy.org/"  
+            regex = r'<tr><td>(\d+\.\d+\.\d+\.\d+)</td><td>(\d+)</td><td>.*?</td><td>.*?</td><td>.*?</td><td class="hx">yes</td>' 
+        elif source == 'free_proxy_list':  
+            url = "https://free-proxy-list.net/"  
+            regex = r'<tr><td>(\d+\.\d+\.\d+\.\d+)</td><td>(\d+)</td>'  
+        elif source == 'ssl_proxies':  
+            url = "https://www.sslproxies.org/"  
+            regex = r'<tr><td>(\d+\.\d+\.\d+\.\d+)</td><td>(\d+)</td>'  
+          
+        response = requests.get(url)  
+        matches = re.findall(regex, response.text)  
+        proxy_list = [(ip, port) for ip, port in matches]  
+        return random.choice(proxy_list) if proxy_list else None  
+    except Exception as e:  
+        logger.error(f"Erro ao obter proxies da fonte {source}: {e}")  
+        return None  
+
+
+def check_proxy(proxy):  
+    """  
+    Verifica se um proxy está funcionando.  
+  
+    Args:  
+        proxy (tuple): O proxy (IP, porta) a ser verificado.  
+  
+    Returns:  
+        bool: True se o proxy estiver funcionando; caso contrário, False.  
+    """  
+    proxies = {  
+        "http": f"http://{proxy[0]}:{proxy[1]}",  
+        "https": f"http://{proxy[0]}:{proxy[1]}"  
+    }  
+  
+    try:  
+        response = requests.get("https://httpbin.io/ip", proxies=proxies, timeout=1)  
+        if response.status_code == 200:  
+            return True  
+        else:  
+            logger.warning(f"Proxy retornou status code {response.status_code}")  
+    except Exception as e:  
+        logger.error(f"Erro ao conectar com o proxy: {e}")  
+    return False  
+
+
+def get_working_proxy(attempts_per_provider=50):  
+    """  
+    Tenta obter um proxy funcional.  
+  
+    Args:  
+        attempts_per_provider(int): Número de tentativas por provedor antes de passar para o próximo.  
+  
+    Returns:  
+        tuple: Um proxy funcional (IP, porta); caso contrário, None.  
+    """  
+    sources = ['us_proxy', 'free_proxy_list', 'ssl_proxies']  
+      
+    for source in sources:  
+        logger.info(f"Tentando obter um proxy da fonte: {source}")  
+        for _ in range(attempts_per_provider):  
+            proxy = get_free_proxy(source)  
+            if proxy and check_proxy(proxy):  
+                return proxy  
+    return None  
+
+def get_driver(site_url: str, headless: bool = False, use_proxy: bool = False) -> Selenium:  
+    """  
+    Inicializa o driver Selenium com suporte a proxies rotativos usando RPA Framework.  
+  
+    Args:  
+        site_url (str): URL do site que será acessado pelo navegador.  
+        headless (bool): Define se o navegador deve rodar em modo headless. Default é False.  
+  
+    Returns:  
+        Selenium: Instância do navegador configurada pelo RPA Framework.  
+    """  
+    try:  
+        browser = Selenium()  
+        logger.info("Criando objeto navegador")  
+
+        options = Options()
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_argument("--window-size=1920,1080")
+        # Exclude the collection of enable-automation switches
+        options.add_experimental_option(
+            "excludeSwitches", ["enable-automation"]
+        )
+        # Turn-off userAutomationExtension
+        options.add_experimental_option("useAutomationExtension", False)
+        
+        if use_proxy: 
+        # Obtém um proxy gratuito e verifica se está funcionando.  
+            proxy = get_working_proxy()  
+            if proxy:  
+                options.append(f"--proxy-server=http://{proxy[0]}:{proxy[1]}")  
+                logger.info(f"Usando Proxy {proxy[0]}:{proxy[1]}")  
+            else:  
+                logger.warning("Nenhum proxy funcional encontrado. Continuando sem proxy.")  
+          
+        if headless:  
+            options.append("--headless")  
+            options.append("--window-size=1920x1080")  
+         
+        
+        browser.open_available_browser("about:blank", options=options)  
+        browser.maximize_browser_window()  
+        browser.set_selenium_page_load_timeout(60)  
+          
+        # Verifica o IP atual  
+        browser.go_to("https://httpbin.io/ip")  
+        ip_info = browser.get_text("css=body")  
+        logger.info(f"IP Atual: {ip_info}")  
+          
+        # Acessa o site desejado  
+        logger.info(f"Acessando o site: {site_url}")  
+        browser.go_to(url=site_url)  
+        
+        browser.delete_all_cookies()
+        # driver.set_window_size(1920, 1080)
+        browser.driver.execute_script(
+        'Object.defineProperty(navigator, "webdriver", {get: () => undefined})'
+        )
+
+        browser.execute_cdp(
+        "Network.setUserAgentOverride",
+        {
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/117.0.0.0 Safari/537.36"
+        },
+        )
+        logger.info(browser.execute_javascript("return navigator.userAgent;"))
+          
+        return browser  
+    except Exception as e:  
+        logger.error(f"Erro encontrado na rotina get_browser: {traceback.format_exc()}")  
+        return None  
 
 def normalize(t: str) -> str:
     return t.lower().strip()
 
+def random_delay(min_delay=1, max_delay=5):
+    time.sleep(random.uniform(min_delay, max_delay))
 
 def center_element(driver, elm):
     """
@@ -80,14 +247,14 @@ def slow_send_keys(el, text, unfocus_on_complete=True):
         el.click()
 
         # some fields need validation, wait before inserting text
-        sleep(1.5)
+        sleep(0.5)
         try:
             el.clear()
         except:
             pass
         for c in text:
             el.send_keys(c)
-            sleep(0.15 * random.uniform(1, 3))
+            sleep(0.01 * random.uniform(0.1, 0.3))
 
         if unfocus_on_complete:
             # once the value is set. it need to be validated again. that means switching to a different
@@ -112,27 +279,10 @@ def js_click(driver, elm):
         ElementNotInteractableException,
         JavascriptException,
         NoSuchElementException,
-    ) as e:
-        logger.critical(f"Exception occurred: {str(e)}")
-        return None
-def find_onetrust(driver):
-    try:
-        onetrust = find_element(
-                        driver,
-                        Selector(css='div[class*="onetrust-pc-dark-filter ot-fade-in"]'),
-                    )
-        if onetrust:
-            driver.execute_script("arguments[0].remove();", onetrust)
-            return True
-    except (
-        ElementClickInterceptedException,
-        ElementNotInteractableException,
-        JavascriptException,
-        NoSuchElementException,
         TimeoutException
     ) as e:
         logger.critical(f"Exception occurred: {str(e)}")
-        return False
+        return None
 
 def click_elm(driver, elm, timeout=Timeout):
     try:
@@ -146,7 +296,7 @@ def click_elm(driver, elm, timeout=Timeout):
             ]
         element_to_click =  find_it(driver, elements=get, timeout=timeout, label=label)
         if element_to_click:
-            find_onetrust(driver)
+
             return element_to_click.click()
         else:
             return None
@@ -155,6 +305,7 @@ def click_elm(driver, elm, timeout=Timeout):
         ElementNotInteractableException,
         JavascriptException,
         NoSuchElementException,
+        TimeoutException
     ) as e:
         logger.critical(f"Exception occurred: {str(e)}")
         return None
@@ -167,6 +318,7 @@ def find_with_label(driver, tag, label, timeout=Timeout):
         ElementNotInteractableException,
         JavascriptException,
         NoSuchElementException,
+        TimeoutException
     ) as e:
         logger.critical(f"Exception occurred: {str(e)}")
         return None
@@ -187,6 +339,7 @@ def find_all_with_attribute(driver, tag, attr, value, timeout=Timeout):
         ElementNotInteractableException,
         JavascriptException,
         NoSuchElementException,
+        TimeoutException
     ) as e:
         logger.critical(f"Exception occurred: {str(e)}")
         return None
@@ -205,6 +358,7 @@ def find_all_elm_with_attribute(elm: WebElement, tag, attr, value, timeout=Timeo
         ElementNotInteractableException,
         JavascriptException,
         NoSuchElementException,
+        TimeoutException
     ) as e:
         logger.critical(f"Exception occurred: {str(e)}")
         return None
@@ -231,7 +385,7 @@ def find_elm_with_attribute(
                 )
                 sleep(0.4)
                 return e
-        except NoSuchElementException:
+        except (NoSuchElementException, TimeoutException):
             logger.debug(
                 f"Not Found: {selector.attr} - with: {selector.tag} and: {target}"
             )
@@ -249,7 +403,7 @@ def find_elm_picture(elm: WebElement, selector: Selector, timeout=Timeout):
             str_picture = e.get_attribute("src")
             sleep(0.4)
             return str_picture
-    except NoSuchElementException:
+    except (NoSuchElementException, TimeoutException):
         logger.debug(f"Not Found: {selector.css}")
 
 
@@ -267,6 +421,7 @@ def find_with_attribute(driver, tag, attr, value, timeout=Timeout):
         ElementNotInteractableException,
         JavascriptException,
         NoSuchElementException,
+        TimeoutException
     ) as e:
         logger.critical(f"Exception occurred: {str(e)}")
         return None
@@ -292,6 +447,7 @@ def find_with_text(driver, tag, text, timeout=Timeout):
         ElementNotInteractableException,
         JavascriptException,
         NoSuchElementException,
+        TimeoutException
     ) as e:
         logger.critical(f"Exception occurred: {str(e)}")
         return None
@@ -319,6 +475,7 @@ def find_css_with_text(driver, css_selector, text, timeout=Timeout):
         ElementNotInteractableException,
         JavascriptException,
         NoSuchElementException,
+        TimeoutException
     ) as e:
         logger.critical(f"Exception occurred: {str(e)}")
         return None
@@ -344,6 +501,7 @@ def find_css(driver, css_selector, timeout=Timeout):
         ElementNotInteractableException,
         JavascriptException,
         NoSuchElementException,
+        TimeoutException
     ) as e:
         logger.critical(f"Exception occurred: {str(e)}")
         return None
@@ -357,6 +515,7 @@ def find_all_css(driver: WebDriver, css_selector, timeout=Timeout):
         ElementNotInteractableException,
         JavascriptException,
         NoSuchElementException,
+        TimeoutException
     ) as e:
         logger.critical(f"Exception occurred: {str(e)}")
         return None
@@ -438,7 +597,7 @@ def find_elements(
             if elm:
                 logger.debug(f"Found element: {elm}")
                 return elm
-        except NoSuchElementException:
+        except (TimeoutException, NoSuchElementException):
             continue
 
 

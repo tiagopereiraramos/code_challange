@@ -6,20 +6,20 @@ import urllib.request
 from datetime import datetime
 from pathlib import Path
 
-import robocorp.log as logger
+from dotenv import load_dotenv
+from Log.logs import Logs
 from openpyxl import Workbook
 from robocorp import storage, workitems
-
 from helpers.article import Article
 from helpers.payload import Payload
 from helpers.selector import Selector
 from webdriver_util.webdrv_util import *
 from selenium.webdriver.chrome.options import Options
 
-
+load_dotenv("config\.env")
 class ProducerMethods:
     @staticmethod
-    def read_csv_create_work_item():
+    def read_csv_create_work_item(debug:bool =True):
         csv_file_path = os.path.join("devdata", "csv_input.csv")
 
         if os.path.exists(csv_file_path):
@@ -32,15 +32,20 @@ class ProducerMethods:
                         section=row[1],
                         data_range=int(row[2]),
                         sort_by=int(row[3]),
+                        results=int(row[4])
                     )
-                    workitems.outputs.create(
-                        payload={
-                            "phrase_test": payload.phrase_test,
-                            "section": payload.section,
-                            "data_range": payload.data_range,
-                            "sort_by": payload.sort_by,
-                        }
-                    )
+                    if not debug:
+                        workitems.outputs.create(
+                            payload={
+                                "phrase_test": payload.phrase_test,
+                                "section": payload.section,
+                                "data_range": payload.data_range,
+                                "sort_by": payload.sort_by,
+                                "results": payload.results
+                            }
+                        )
+                    else:
+                        return payload
         else:
             logger.critical(f"The CSV file: {csv_file_path} was not found.")
 
@@ -63,67 +68,22 @@ class ScraperMethods:
 
     @staticmethod
     def inicial_search(driver: Selenium, phrase: str):
-        logger.info("Starting Scraper")
-        logger.info("Getting a url site to the scraper")
-        site_url = storage.get_text("site_url")
-        if site_url:
-            logger.info(f"URL received: {site_url}")
         try:
-            if driver:
-                logger.info(f"Open URL: {site_url}")
-                options = Options()
-                options.add_argument("--headless")
-                options.add_argument("--disable-dev-shm-usage")
-                options.add_argument("--no-sandbox")
-                options.add_argument("--disable-blink-features=AutomationControlled")
-                options.add_argument("--window-size=1920,1080")
-                # Exclude the collection of enable-automation switches
-                options.add_experimental_option(
-                    "excludeSwitches", ["enable-automation"]
-                )
-                # Turn-off userAutomationExtension
-                options.add_experimental_option("useAutomationExtension", False)
-
-                driver.open_browser(
-                    url=site_url,
-                    browser="chrome",
-                    options=options,
-                    executable_path=get_chromedriver_path(),
-                )
-                driver.delete_all_cookies()
-                # driver.set_window_size(1920, 1080)
-                driver.driver.execute_script(
-                    'Object.defineProperty(navigator, "webdriver", {get: () => undefined})'
-                )
-
-                driver.execute_cdp(
-                    "Network.setUserAgentOverride",
-                    {
-                        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/117.0.0.0 Safari/537.36"
-                    },
-                )
-                logger.info(driver.execute_javascript("return navigator.userAgent;"))
-
-                search = find_element(
-                    driver.driver, Selector(css='button[aria-label="Open search bar"]')
-                )
-                if search:
-                    center_element(driver.driver, search)
-                    click_elm(driver.driver, search)
-                    search_field = find_element(
-                        driver.driver,
-                        Selector(css="input[aria-labelledby*=react-aria]"),
+            logger.info("Starting Scraper")
+            search = find_element(
+                        driver.driver, Selector(css='button[data-element="search-button"]')
                     )
-                    if search_field:
-                        if "search" in search_field.get_attribute("type"):
-                            slow_send_keys(el=search_field, text=phrase)
-                            button_search = find_element(
-                                driver.driver,
-                                Selector(css="button[aria-label='Search']"),
-                            )
-                            if button_search:
-                                click_elm(driver.driver, button_search)
-                                return True
+            if search:
+                center_element(driver.driver, search)
+                click_elm(driver.driver, search)
+                search_field = find_element(
+                    driver.driver,
+                    Selector(css="input[data-element='search-form-input']"),
+                )
+                if search_field:
+                    center_element(driver.driver, search_field)
+                    slow_send_keys(search_field, phrase + Keys.ENTER, False)
+                    return True
         except Exception as e:
             print(e.with_traceback())
             return False
@@ -137,85 +97,61 @@ class ScraperMethods:
         data_range: int = 0,
     ):
         try:
-            no_results_match = find_with_text(
-                driver.driver, "h1", f"No search results match the term “{phrase}”"
+            no_results_match = find_element(
+                driver.driver, 
+                Selector(css="div[class='search-results-module-no-results']")
             )
             if no_results_match:
                 logger.critical(f"Some error occurred: No search match...")
                 return False
+            #Expand Filter 
             label_search = find_element(
-                driver.driver, Selector(css="label", text="Search Reuters")
+                driver.driver, Selector(css="span[class='see-all-text']")
             )
             if label_search:
-                if len(section.strip()) > 0:
-                    if label_search:
-                        combo_section = find_element(
-                            driver.driver, Selector(css='button[id="sectionfilter"]')
-                        )
-                        if combo_section:
-                            center_element(driver.driver, combo_section)
-                            click_elm(driver.driver, combo_section)
-                            find_section = find_element(
-                                driver.driver,
-                                Selector(css="li", attr=["data-key", f"{section}"]),
-                            )
-                            if find_section:
-                                click_elm(driver.driver, find_section)
-                                sleep(3)
-                if data_range >= 0:
-                    combo_data_range = find_element(
-                        driver.driver, Selector(css='button[id="daterangefilter"]')
-                    )
-                    if combo_data_range:
-                        center_element(driver.driver, combo_data_range)
-                        click_elm(driver.driver, combo_data_range)
-                        #!LEGEND: 0= Past 24 hours 1= Past week 2= Past month 3= Past year
-                        if data_range == 0:
-                            data_range_str = "Past 24 hours"
-                        elif data_range == 1:
-                            data_range_str = "Past week"
-                        elif data_range == 2:
-                            data_range_str = "Past month"
-                        elif data_range == 3:
-                            data_range_str = "Past year"
-                        find_data_range = find_element(
-                            driver.driver,
-                            Selector(css="li", attr=["data-key", f"{data_range_str}"]),
-                        )
-                        if find_data_range:
-                            click_elm(driver.driver, find_data_range)
-                            sleep(3)
-                if sort_by >= 0:
-                    combo_sort = find_element(
-                        driver.driver, Selector(css='button[id="sortby"]')
-                    )
-                    if combo_sort:
-                        center_element(driver.driver, combo_sort)
-                        click_elm(driver.driver, combo_sort)
-                        #!LEGEND: 0= Newest 1= Older 2= Relevance
-                        if sort_by == 0:
-                            sort_by_str = "Newest"
-                        elif sort_by == 1:
-                            sort_by_str = "Older"
-                        elif sort_by == 2:
-                            sort_by_str = "Relevance"
+                center_element(driver.driver, label_search)
+                click_elm(driver.driver, label_search)
+                if len(section.strip())>0:
+                    list_topics = extract_names_from_list_items(driver)
+                    if list_topics:
+                        element_topic, topic = search_and_click_topics(driver.driver,list_topics, section)
+                        if element_topic == False and topic == False:
+                            return False           
+                if sort_by>0: #not Relevance (default)
+                    select_sort_by = find_element(
+                        driver.driver, 
+                        Selector(css="select[name='s']"))
+                    if select_sort_by:
+                        if sort_by == 1 or sort_by == 2:
+                            select_option_value(
+                                select_sort_by,
+                                sort_by
+                                )
                         else:
-                            sort_by_str = "Newest"
-                        find_sort_by = find_element(
-                            driver.driver,
-                            Selector(css="li", attr=["data-key", f"{sort_by_str}"]),
-                        )
-                        if find_sort_by:
-                            click_elm(driver.driver, find_sort_by)
-                            sleep(3)
-                            return True
+                            logger.error(f'Sort parameter not exists: {sort_by}')
+                            logger.info('Relevance is selected')
+
+                if data_range >= 0:
+                    #!LEGEND: 0= Actual Page 1= Results you want 2= All Results 
+                    if data_range == 0:
+                        data_range_str = "Actual Page"
+                    elif data_range == 1:
+                        data_range_str = "Results you want"
+                    elif data_range == 2:
+                        data_range_str = "All Results"
+                    if len(data_range_str.strip())>0:
+                        logger.info(f'{data_range_str} is selected')
+                    else:
+                        data_range= 0                    
+                        logger.info('Actual Page is selected')
+            return True, data_range
 
         except Exception as e:
             logger.critical(f"Some error occurred: {e.__cause__}.")
             return False
 
     @staticmethod
-    def collect_articles(driver: WebDriver) -> list[Article] | None:
+    def collect_articles(driver: WebDriver, data_range:int=0) -> list[Article] | None:
         try:
             list_articles = []
             more_results = True
@@ -223,30 +159,30 @@ class ScraperMethods:
                 logger.info("Search results was found")
                 search_results_section = find_element(
                     driver.driver,
-                    Selector(css="div[class*=search-results__sectionContainer]"),
+                    Selector(css="div[class='search-results-module-results-header'"),
                 )
                 if search_results_section:
                     logger.info("Search results was found")
                     li_search_results = find_all_css(
-                        driver.driver, 'ul[class*="search-results__list"] li'
+                        driver.driver, 'ul[class*="search-results-module-results-menu"] li'
                     )
                     if li_search_results:
                         sleep(3)
                         lst_title = []
-                        lt = TagAttVl(tag="a", attr="data-testid", vlr="Link")
-                        l2t = TagAttVl(tag="a", attr="data-testid", vlr="Heading")
+                        lt = TagAttVl(tag="a", attr="class", vlr="link") #title
                         lst_title.append(lt)
-                        lst_title.append(l2t)
+                        lst_description = []
+                        ld = TagAttVl(tag="p", attr="class", vlr="promo-description")#description
+                        lst_description.append(ld)
                         lst_time = []
-                        ltm = TagAttVl(tag="time", attr="data-testid", vlr="Body")
-                        l2tm = TagAttVl(tag="time", attr="data-testid", vlr="Text")
+                        ltm = TagAttVl(tag="p", attr="class", vlr="promo-timestamp") #time
                         lst_time.append(ltm)
-                        lst_time.append(l2tm)
                         for li in li_search_results:
                             logger.info("Create a article object")
                             article = Article()
                             title = find_elm_with_attribute(li, lst_title)
                             time = find_elm_with_attribute(li, lst_time)
+                            description = find_elm_with_attribute(li, lst_description)
                             try:
                                 center_element(driver.driver, li)
                                 photo = find_elm_picture(
@@ -264,8 +200,9 @@ class ScraperMethods:
                                 pass
                             logger.info("Information about article was found.")
                             article.title = title.text.strip()
+                            article.description = description.text.strip()
                             article.date = datetime.strptime(
-                                time.get_attribute("datetime"), "%Y-%m-%dT%H:%M:%SZ"
+                                time.text.strip(), "%B %d, %Y"
                             )
                             logger.info(
                                 f" Title: {article.title} -- Date: {article.date}"
